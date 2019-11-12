@@ -12,7 +12,7 @@ dev() {
   exec 8<"${tmp}"
   rm -f "${tmp}"
 
-  "${__minidev_source_dir}/exe/dev" "$@"
+  "${__minidev_source_dir}/bin/dev" "$@"
   ret=$?
 
   while read -r finalizer; do

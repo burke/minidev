@@ -6,9 +6,8 @@ stdenvNoCC.mkDerivation {
   src = ./.;
 
   installPhase = ''
-    mkdir -p $out/bin $out/share/minidev
-    cp $src/exe/dev $out/bin/dev
+    mkdir $out
+    cp -R $src/dev.sh $src/bin $src/lib $src/vendor $out
     chmod +x $out/bin/dev
-    cp -R $src/dev.sh $src/lib $src/vendor $out
   '';
 }
