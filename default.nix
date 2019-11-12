@@ -9,7 +9,6 @@ stdenvNoCC.mkDerivation {
     mkdir -p $out/bin $out/share/minidev
     cp $src/exe/dev $out/bin/dev
     chmod +x $out/bin/dev
-    cp -R $src/lib $src/vendor $out
-    cp $src/dev.sh $out/share/minidev/dev.sh
+    cp -R $src/dev.sh $src/lib $src/vendor $out
   '';
 }
