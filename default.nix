@@ -1,9 +1,13 @@
-{ stdenvNoCC ? (import <nixpkgs> {}).stdenvNoCC }:
+{ stdenvNoCC ? (import <nixpkgs> {}).stdenvNoCC
+, ruby       ? (import <nixpkgs> {}).ruby
+}:
 stdenvNoCC.mkDerivation {
   pname = "minidev";
   version = "1.0.0";
 
   src = ./.;
+
+  buildInputs = [ ruby ];
 
   installPhase = ''
     mkdir $out
