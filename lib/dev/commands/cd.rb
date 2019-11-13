@@ -17,8 +17,16 @@ module Dev
 
       def avail
         owners = Dir.entries(File.expand_path("~/src/github.com")) - %w(. ..)
+        owners = owners.select do |f|
+          File.directory?(File.join(File.expand_path("~/src/github.com"), f))
+        end
+
         owners.flat_map do |owner|
           repos = Dir.entries(File.expand_path("~/src/github.com/#{owner}")) - %w(. ..)
+          repos = repos.select do |f|
+            File.directory?(File.join(File.expand_path("~/src/github.com/#{owner}"), f))
+          end
+
           repos.map { |r| File.join(owner, r) }
         end
       end
