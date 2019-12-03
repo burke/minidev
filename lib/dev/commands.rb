@@ -14,10 +14,11 @@ module Dev
 
     autoload(:Contextual, 'dev/commands/contextual')
 
-    register(:Cd,    'cd',    'dev/commands/cd')
-    register(:Clone, 'clone', 'dev/commands/clone')
-    register(:Help,  'help',  'dev/commands/help')
-    register(:Init,  'init',  'dev/commands/init')
-    register(:Up,    'up',    'dev/commands/up')
+    register(:Cd,     'cd',     'dev/commands/cd')
+    register(:Clone,  'clone',  'dev/commands/clone')
+    register(:Config, 'config', 'dev/commands/config')
+    register(:Help,   'help',   'dev/commands/help')
+    register(:Init,   'init',   'dev/commands/init')
+    register(:Up,     'up',     'dev/commands/up')
   end
 end
