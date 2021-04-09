@@ -19,6 +19,7 @@ module Dev
     register(:Config, 'config', 'dev/commands/config')
     register(:Help,   'help',   'dev/commands/help')
     register(:Init,   'init',   'dev/commands/init')
+    register(:Open,   'open',   'dev/commands/open')
     register(:Up,     'up',     'dev/commands/up')
   end
 end
