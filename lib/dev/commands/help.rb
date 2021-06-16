@@ -10,6 +10,7 @@ module Dev
         Dev::Commands::Registry.resolved_commands.each do |name, klass|
           next if name == 'help'
           puts CLI::UI.fmt("{{command:#{Dev::TOOL_NAME} #{name}}}")
+          next unless klass.respond_to?(:help)
           if help = klass.help
             puts CLI::UI.fmt(help)
           end
