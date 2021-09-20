@@ -27,7 +27,7 @@ module Dev
       end
 
       def origin_to_url(origin)
-        _, owner, repo = origin.match(%r{(https://|git@)github.com[:/](.+)/(\w+)(\.git)?}).captures
+        _, owner, repo = origin.match(%r{(https://|git@)github.com[:/](.+)/([\w\-]+)(\.git)?}).captures
         "#{GITHUB_URL}/#{owner}/#{repo}"
       end
     end
