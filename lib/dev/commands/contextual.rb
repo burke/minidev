@@ -18,7 +18,7 @@ module Dev
 
         sh.concat(' "$@"') if sh.lines.size == 1 && sh !~ /\$[@\*]/
         sh = %Q{runcmd() {\n#{sh}\n}\nruncmd "$@"}
-        exec('/bin/bash', '-c', sh, '--', *args)
+        exec(cmd_env(cfg), '/bin/bash', '-c', sh, '--', *args)
       end
 
       def configstr_run(name, x, args)
@@ -40,6 +40,10 @@ module Dev
 
       def self.help
         'TODO'
+      end
+
+      def cmd_env(cfg)
+        return ENV.to_h.merge(cfg['env'] || {})
       end
     end
   end
