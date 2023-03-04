@@ -1,4 +1,4 @@
 up:
   - ruby: 2.5.6
 
-build: bin/update-deps
+build: script/update-deps
