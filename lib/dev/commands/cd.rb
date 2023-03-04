@@ -14,6 +14,7 @@ module Dev
         arg = args.first
         scores, stat = CLI::Kit::System.capture2(FZY, '--show-matches', arg, stdin_data: avail.join("\n"))
         raise(Abort, 'fzy failed') unless stat.success?
+        raise(Abort, "no such file or directory: #{arg}") if scores.empty?
 
         target = File.expand_path(File.join(GITHUB_ROOT, scores.lines.first))
         IO.new(9).puts("chdir:#{target}")
