@@ -6,7 +6,7 @@ module Dev
       basename = RUBY_PLATFORM =~ /darwin/ ? 'fzy_darwin' : 'fzy_linux'
       File.expand_path("vendor/#{basename}", ROOT)
     end
-    GITHUB_ROOT = '~/src/github.com'
+    GITHUB_ROOT = ENV.fetch('DEV_GITHUB_ROOT', '~/src/github.com')
 
     class Cd < Dev::Command
       def call(args, _name)
