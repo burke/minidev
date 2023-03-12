@@ -10,7 +10,7 @@ module Dev
         repo = if arg =~ %r{.*/.*}
           arg
         else
-          "#{default_account}/#{arg}"
+          "#{Dev::Default.account}/#{arg}"
         end
         target = File.expand_path("~/src/github.com/#{repo}")
         FileUtils.mkdir_p(File.dirname(target))
@@ -21,12 +21,6 @@ module Dev
 
       def self.help
         'TODO'
-      end
-
-      def default_account
-        account = Dev::Config.get('default', 'account')
-        raise(Abort, 'account/repo both required unless default.account is set in config') unless account
-        account
       end
     end
   end

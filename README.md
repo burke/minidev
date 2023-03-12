@@ -32,3 +32,5 @@ elif [ -f ~/src/github.com/burke/minidev/dev.sh ]; then
   source ~/src/github.com/burke/minidev/dev.sh
 fi
 ```
+
+You can config the default directory for `dev clone` and `dev cd` by calling `dev config set default.github_root <path to directory>`, otherwise it defaults to `~/src/github.com`.

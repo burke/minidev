@@ -17,6 +17,7 @@ module Dev
   autoload(:Commands,           'dev/commands')
   autoload(:ContextualResolver, 'dev/contextual_resolver')
   autoload(:Project,            'dev/project')
+  autoload(:Default,            'dev/default')
 
   autocall(:Config)  { CLI::Kit::Config.new(tool_name: TOOL_NAME) }
   autocall(:Command) { CLI::Kit::BaseCommand }

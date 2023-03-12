@@ -6,7 +6,6 @@ module Dev
       basename = RUBY_PLATFORM =~ /darwin/ ? 'fzy_darwin' : 'fzy_linux'
       File.expand_path("vendor/#{basename}", ROOT)
     end
-    GITHUB_ROOT = ENV.fetch('DEV_GITHUB_ROOT', '~/src/github.com')
 
     class Cd < Dev::Command
       def call(args, _name)
@@ -15,20 +14,20 @@ module Dev
         scores, stat = CLI::Kit::System.capture2(FZY, '--show-matches', arg, stdin_data: avail.join("\n"))
         raise(Abort, 'fzy failed') unless stat.success?
 
-        target = File.expand_path(File.join(GITHUB_ROOT, scores.lines.first))
+        target = File.expand_path(File.join(Dev::Default.github_root, scores.lines.first))
         IO.new(9).puts("chdir:#{target}")
       end
 
       def avail
-        owners = Dir.entries(File.expand_path(GITHUB_ROOT)) - %w(. ..)
+        owners = Dir.entries(File.expand_path(Dev::Default.github_root)) - %w(. ..)
         owners = owners.select do |f|
-          File.directory?(File.join(File.expand_path(GITHUB_ROOT), f))
+          File.directory?(File.join(File.expand_path(Dev::Default.github_root), f))
         end
 
         owners.flat_map do |owner|
-          repos = Dir.entries(File.expand_path(File.join(GITHUB_ROOT, owner))) - %w(. ..)
+          repos = Dir.entries(File.expand_path(File.join(Dev::Default.github_root, owner))) - %w(. ..)
           repos = repos.select do |f|
-            File.directory?(File.join(File.expand_path(File.join(GITHUB_ROOT, owner)), f))
+            File.directory?(File.join(File.expand_path(File.join(Dev::Default.github_root, owner)), f))
           end
 
           repos.map { |r| File.join(owner, r) }
