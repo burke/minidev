@@ -13,6 +13,10 @@ module Dev
           "#{default_account}/#{arg}"
         end
         target = File.expand_path("~/src/github.com/#{repo}")
+        if File.directory?(target)
+          IO.new(9).puts("chdir:#{target}")
+          return
+        end
         FileUtils.mkdir_p(File.dirname(target))
         stat = CLI::Kit::System.system('git', 'clone', "https://github.com/#{repo}", target)
         raise(Abort, "clone failed") unless stat.success?
