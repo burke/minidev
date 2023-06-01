@@ -9,7 +9,7 @@ module Dev
         cfg = Project.current.config
 
         sh, args = if DEFAULT_COMMANDS.include?(name) && cfg.key?(name)
-          configstr_run(cfg[name], args)
+          configstr_run(name, cfg[name], args)
         else
           configstr_run(name, cfg['commands'][name], args)
         end
