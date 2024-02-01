@@ -12,7 +12,7 @@ module Dev
         else
           "#{Dev::Default.account}/#{arg}"
         end
-        target = File.expand_path("~/src/github.com/#{repo}")
+        target = File.expand_path("#{Dev::Default.github_root}/#{repo}")
         if File.directory?(target)
           IO.new(9).puts("chdir:#{target}")
           return
