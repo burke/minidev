@@ -14,6 +14,7 @@ module Dev
 
     autoload(:Contextual, 'dev/commands/contextual')
 
+    register(:Run,    'run',    'dev/commands/run')
     register(:Cd,     'cd',     'dev/commands/cd')
     register(:Clone,  'clone',  'dev/commands/clone')
     register(:Config, 'config', 'dev/commands/config')
