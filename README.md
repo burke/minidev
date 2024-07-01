@@ -6,11 +6,22 @@ Where most of `dev` is concerned with `dev up`, which provisions dependencies an
 things, there's a little bit of accessory function that's pretty easy to replicate, which is what's
 been done here.
 
+## install
+
+```bash
+curl https://raw.githubusercontent.com/burke/minidev/master/install.sh | bash
+```
+
+this writes minidev to ~/.local/minidev and sources it from your  .profile
+
+## notes
+
 `minidev` implements:
 
 * `dev cd`
 * `dev clone`
 * Project-local commands (`dev {build,style,console,server,test,etc.}`).
+
 
 `minidev` does not:
 
