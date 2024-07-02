@@ -84,8 +84,11 @@ deps.each do |dep|
   FileUtils.mkdir_p(depdir)
   dstlib = File.expand_path('lib', depdir)
   srclib = File.expand_path('lib', path)
+  dstvnd = File.expand_path('vendor', depdir)
+  srcvnd = File.expand_path('vendor', path)
 
   FileUtils.cp_r(srclib, dstlib)
+  FileUtils.cp_r(srcvnd, dstvnd) if File.exist?(srcvnd)
 
   rev = head_sha
   rev << " (dirty)" if dirty
