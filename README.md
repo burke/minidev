@@ -45,3 +45,15 @@ fi
 ```
 
 You can config the default directory for `dev clone` and `dev cd` by calling `dev config set default.github_root <path to directory>`, otherwise it defaults to `~/src/github.com`.
+
+## contributing
+
+Are you ex-Shopify? Feel free to send patches to implement the thing the way you
+remember it working.
+
+Are you current Shopify? There's really very little I could point to in `dev`
+itself that couldn't be made open source. You can pretty much feel free to copy
+code directly over here, just try not to introduce a whole lot of complexity.
+
+In general we don't want minidev to do _different_ things than `dev`, except to
+the extent necesary for simplicity or a bit less Shopify-specificness.
