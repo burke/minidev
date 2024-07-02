@@ -1,3 +1,5 @@
+require 'cli/kit'
+
 module CLI
   module Kit
     module Support
@@ -10,7 +12,9 @@ module CLI
         def assert_all_commands_run(should_raise: true)
           errors = CLI::Kit::System.error_message
           CLI::Kit::System.reset!
-          assert false, errors if should_raise && !errors.nil?
+          # this is in minitest, but sorbet doesn't know that. probably we
+          # could structure this better.
+          T.unsafe(self).assert(false, errors) if should_raise && !errors.nil?
           errors
         end
 
@@ -52,30 +56,32 @@ module CLI
             module System
               class << self
                 alias_method :original_system, :system
-                def system(*a, sudo: false, env: {}, **kwargs)
-                  expected_command = expected_command(*a, sudo: sudo, env: env)
+                def system(cmd, *a, sudo: false, env: {}, stdin: nil, **kwargs)
+                  a.unshift(cmd)
+                  expected_command = expected_command(a, sudo: sudo, env: env)
 
                   # In the case of an unexpected command, expected_command will be nil
                   return FakeSuccess.new(false) if expected_command.nil?
 
                   # Otherwise handle the command
                   if expected_command[:allow]
-                    original_system(*a, sudo: sudo, env: env, **kwargs)
+                    T.unsafe(self).original_system(*a, sudo: sudo, env: env, **kwargs)
                   else
                     FakeSuccess.new(expected_command[:success])
                   end
                 end
 
                 alias_method :original_capture2, :capture2
-                def capture2(*a, sudo: false, env: {}, **kwargs)
-                  expected_command = expected_command(*a, sudo: sudo, env: env)
+                def capture2(cmd, *a, sudo: false, env: {}, **kwargs)
+                  a.unshift(cmd)
+                  expected_command = expected_command(a, sudo: sudo, env: env)
 
                   # In the case of an unexpected command, expected_command will be nil
                   return [nil, FakeSuccess.new(false)] if expected_command.nil?
 
                   # Otherwise handle the command
                   if expected_command[:allow]
-                    original_capture2(*a, sudo: sudo, env: env, **kwargs)
+                    T.unsafe(self).original_capture2(*a, sudo: sudo, env: env, **kwargs)
                   else
                     [
                       expected_command[:stdout],
@@ -85,15 +91,16 @@ module CLI
                 end
 
                 alias_method :original_capture2e, :capture2e
-                def capture2e(*a, sudo: false, env: {}, **kwargs)
-                  expected_command = expected_command(*a, sudo: sudo, env: env)
+                def capture2e(cmd, *a, sudo: false, env: {}, **kwargs)
+                  a.unshift(cmd)
+                  expected_command = expected_command(a, sudo: sudo, env: env)
 
                   # In the case of an unexpected command, expected_command will be nil
                   return [nil, FakeSuccess.new(false)] if expected_command.nil?
 
                   # Otherwise handle the command
                   if expected_command[:allow]
-                    original_capture2ecapture2e(*a, sudo: sudo, env: env, **kwargs)
+                    T.unsafe(self).original_capture2e(*a, sudo: sudo, env: env, **kwargs)
                   else
                     [
                       expected_command[:stdout],
@@ -103,15 +110,16 @@ module CLI
                 end
 
                 alias_method :original_capture3, :capture3
-                def capture3(*a, sudo: false, env: {}, **kwargs)
-                  expected_command = expected_command(*a, sudo: sudo, env: env)
+                def capture3(cmd, *a, sudo: false, env: {}, **kwargs)
+                  a.unshift(cmd)
+                  expected_command = expected_command(a, sudo: sudo, env: env)
 
                   # In the case of an unexpected command, expected_command will be nil
                   return [nil, nil, FakeSuccess.new(false)] if expected_command.nil?
 
                   # Otherwise handle the command
                   if expected_command[:allow]
-                    original_capture3(*a, sudo: sudo, env: env, **kwargs)
+                    T.unsafe(self).original_capture3(*a, sudo: sudo, env: env, **kwargs)
                   else
                     [
                       expected_command[:stdout],
@@ -134,8 +142,8 @@ module CLI
                 #
                 # Note: Must set allow or success
                 #
-                def fake(*a, stdout: "", stderr: "", allow: nil, success: nil, sudo: false, env: {})
-                  raise ArgumentError, "success or allow must be set" if success.nil? && allow.nil?
+                def fake(*a, stdout: '', stderr: '', allow: nil, success: nil, sudo: false, env: {})
+                  raise ArgumentError, 'success or allow must be set' if success.nil? && allow.nil?
 
                   @delegate_open3 ||= {}
                   @delegate_open3[a.join(' ')] = {
@@ -196,37 +204,38 @@ module CLI
 
                   unless errors[:unexpected].empty?
                     final_error << CLI::UI.fmt(<<~EOF)
-                    {{bold:Unexpected command invocations:}}
-                    {{command:#{errors[:unexpected].join("\n")}}}
+                      {{bold:Unexpected command invocations:}}
+                      {{command:#{errors[:unexpected].join("\n")}}}
                     EOF
                   end
 
                   unless errors[:not_run].empty?
                     final_error << CLI::UI.fmt(<<~EOF)
-                    {{bold:Expected commands were not run:}}
-                    {{command:#{errors[:not_run].join("\n")}}}
+                      {{bold:Expected commands were not run:}}
+                      {{command:#{errors[:not_run].join("\n")}}}
                     EOF
                   end
 
                   unless errors[:other].empty?
                     final_error << CLI::UI.fmt(<<~EOF)
-                    {{bold:Commands were not run as expected:}}
-                    #{errors[:other].map { |cmd, msg| "{{command:#{cmd}}}\n#{msg}" }.join("\n\n")}
+                      {{bold:Commands were not run as expected:}}
+                      #{errors[:other].map { |cmd, msg| "{{command:#{cmd}}}\n#{msg}" }.join("\n\n")}
                     EOF
                   end
 
-                  return nil if final_error.empty?
+                  return if final_error.empty?
+
                   "\n" + final_error.join("\n") # Initial new line for formatting reasons
                 end
 
                 private
 
-                def expected_command(*a, sudo: raise, env: raise)
+                def expected_command(a, sudo: raise, env: raise)
                   expected_cmd = @delegate_open3[a.join(' ')]
 
                   if expected_cmd.nil?
                     @delegate_open3[a.join(' ')] = { unexpected: true }
-                    return nil
+                    return
                   end
 
                   expected_cmd[:run] = true

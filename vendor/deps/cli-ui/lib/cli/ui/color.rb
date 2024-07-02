@@ -1,9 +1,17 @@
+# typed: true
+
 require 'cli/ui'
 
 module CLI
   module UI
     class Color
-      attr_reader :sgr, :name, :code
+      extend T::Sig
+
+      sig { returns(String) }
+      attr_reader :sgr, :code
+
+      sig { returns(Symbol) }
+      attr_reader :name
 
       # Creates a new color mapping
       # Signatures can be found here:
@@ -14,6 +22,7 @@ module CLI
       # * +sgr+ - The color signature
       # * +name+ - The name of the color
       #
+      sig { params(sgr: String, name: Symbol).void }
       def initialize(sgr, name)
         @sgr  = sgr
         @code = CLI::UI::ANSI.sgr(sgr)
@@ -32,7 +41,7 @@ module CLI
       WHITE   = new('97', :white)
 
       # 240 is very dark gray; 255 is very light gray. 244 is somewhat dark.
-      GRAY = new('38;5;244', :grey)
+      GRAY = new('38;5;244', :gray)
 
       MAP = {
         red: RED,
@@ -47,10 +56,15 @@ module CLI
       }.freeze
 
       class InvalidColorName < ArgumentError
+        extend T::Sig
+
+        sig { params(name: Symbol).void }
         def initialize(name)
+          super
           @name = name
         end
 
+        sig { returns(String) }
         def message
           keys = Color.available.map(&:inspect).join(',')
           "invalid color: #{@name.inspect} " \
@@ -58,25 +72,31 @@ module CLI
         end
       end
 
-      # Looks up a color code by name
-      #
-      # ==== Raises
-      # Raises a InvalidColorName if the color is not available
-      # You likely need to add it to the +MAP+ or you made a typo
-      #
-      # ==== Returns
-      # Returns a color code
-      #
-      def self.lookup(name)
-        MAP.fetch(name)
-      rescue KeyError
-        raise InvalidColorName, name
-      end
+      class << self
+        extend T::Sig
 
-      # All available colors by name
-      #
-      def self.available
-        MAP.keys
+        # Looks up a color code by name
+        #
+        # ==== Raises
+        # Raises a InvalidColorName if the color is not available
+        # You likely need to add it to the +MAP+ or you made a typo
+        #
+        # ==== Returns
+        # Returns a color code
+        #
+        sig { params(name: T.any(Symbol, String)).returns(Color) }
+        def lookup(name)
+          MAP.fetch(name.to_sym)
+        rescue KeyError
+          raise InvalidColorName, name.to_sym
+        end
+
+        # All available colors by name
+        #
+        sig { returns(T::Array[Symbol]) }
+        def available
+          MAP.keys
+        end
       end
     end
   end

@@ -1,11 +1,16 @@
+# typed: true
+
 require 'cli/kit'
 require 'fileutils'
 
 module CLI
   module Kit
     class Config
+      extend T::Sig
+
       XDG_CONFIG_HOME = 'XDG_CONFIG_HOME'
 
+      sig { params(tool_name: String).void }
       def initialize(tool_name:)
         @tool_name = tool_name
       end
@@ -18,22 +23,26 @@ module CLI
       # `name` : the name of the config value you are looking for
       #
       # #### Returns
-      # `value` : the value of the config variable (false if none)
+      # `value` : the value of the config variable (nil if none)
       #
       # #### Example Usage
       # `config.get('name.of.config')`
       #
-      def get(section, name, default: false)
+      sig { params(section: String, name: String, default: T.nilable(String)).returns(T.nilable(String)) }
+      def get(section, name, default: nil)
         all_configs.dig("[#{section}]", name) || default
       end
 
       # Coalesce and enforce the value of a config to a boolean
+      sig { params(section: String, name: String, default: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
       def get_bool(section, name, default: false)
-        case get(section, name, default: default).to_s
-        when "true"
+        case get(section, name)
+        when 'true'
           true
-        when "false"
+        when 'false'
           false
+        when nil
+          default
         else
           raise CLI::Kit::Abort, "Invalid config: #{section}.#{name} is expected to be true or false"
         end
@@ -49,9 +58,15 @@ module CLI
       # #### Example Usage
       # `config.set('section', 'name.of.config', 'value')`
       #
+      sig { params(section: String, name: String, value: T.nilable(T.any(String, T::Boolean))).void }
       def set(section, name, value)
         all_configs["[#{section}]"] ||= {}
-        all_configs["[#{section}]"][name] = value.nil? ? nil : value.to_s
+        case value
+        when nil
+          T.must(all_configs["[#{section}]"]).delete(name)
+        else
+          T.must(all_configs["[#{section}]"])[name] = value.to_s
+        end
         write_config
       end
 
@@ -64,6 +79,7 @@ module CLI
       # #### Example Usage
       # `config.unset('section', 'name.of.config')`
       #
+      sig { params(section: String, name: String).void }
       def unset(section, name)
         set(section, name, nil)
       end
@@ -76,24 +92,12 @@ module CLI
       # #### Example Usage
       # `config.get_section('section')`
       #
+      sig { params(section: String).returns(T::Hash[String, String]) }
       def get_section(section)
         (all_configs["[#{section}]"] || {}).dup
       end
 
-      # Returns a path from config in expanded form
-      # e.g. shopify corresponds to ~/src/shopify, but is expanded to /Users/name/src/shopify
-      #
-      # #### Example Usage
-      # `config.get_path('srcpath', 'shopify')`
-      #
-      # #### Returns
-      # `path` : the expanded path to the corrsponding value
-      #
-      def get_path(section, name = nil)
-        v = get(section, name)
-        false == v ? v : File.expand_path(v)
-      end
-
+      sig { returns(String) }
       def to_s
         ini.to_s
       end
@@ -103,6 +107,7 @@ module CLI
       # if ENV['XDG_CONFIG_HOME'] is not set, we default to ~/.config, e.g.:
       #   ~/.config/tool/config
       #
+      sig { returns(String) }
       def file
         config_home = ENV.fetch(XDG_CONFIG_HOME, '~/.config')
         File.expand_path(File.join(@tool_name, 'config'), config_home)
@@ -110,20 +115,20 @@ module CLI
 
       private
 
+      sig { returns(T::Hash[String, T::Hash[String, String]]) }
       def all_configs
         ini.ini
       end
 
+      sig { returns(CLI::Kit::Ini) }
       def ini
-        @ini ||= CLI::Kit::Ini
-          .new(file, default_section: "[global]", convert_types: false)
-          .tap(&:parse)
+        @ini ||= CLI::Kit::Ini.new(file).tap(&:parse)
       end
 
+      sig { void }
       def write_config
         all_configs.each do |section, sub_config|
-          all_configs[section] = sub_config.reject { |_, value| value.nil? }
-          all_configs.delete(section) if all_configs[section].empty?
+          all_configs.delete(section) if sub_config.empty?
         end
         FileUtils.mkdir_p(File.dirname(file))
         File.write(file, to_s)

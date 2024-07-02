@@ -1,17 +1,28 @@
+# typed: true
+
 require 'cli/ui'
-require 'cli/kit/ruby_backports/enumerable'
+
+unless defined?(T)
+  require('cli/kit/sorbet_runtime_stub')
+end
+
+require 'cli/kit/core_ext'
 
 module CLI
   module Kit
-    autoload :Autocall,        'cli/kit/autocall'
+    extend T::Sig
+
+    autoload :Args,            'cli/kit/args'
     autoload :BaseCommand,     'cli/kit/base_command'
     autoload :CommandRegistry, 'cli/kit/command_registry'
+    autoload :CommandHelp,     'cli/kit/command_help'
     autoload :Config,          'cli/kit/config'
     autoload :ErrorHandler,    'cli/kit/error_handler'
     autoload :Executor,        'cli/kit/executor'
     autoload :Ini,             'cli/kit/ini'
     autoload :Levenshtein,     'cli/kit/levenshtein'
     autoload :Logger,          'cli/kit/logger'
+    autoload :Opts,            'cli/kit/opts'
     autoload :Resolver,        'cli/kit/resolver'
     autoload :Support,         'cli/kit/support'
     autoload :System,          'cli/kit/system'
@@ -28,7 +39,8 @@ module CLI
     # a bare `rescue => e`.
     #
     # * Abort prints its message in red and exits 1;
-    # * Bug additionally submits the exception to Bugsnag;
+    # * Bug additionally submits the exception to the exception_reporter passed to
+    #     `CLI::Kit::ErrorHandler.new`
     # * AbortSilent and BugSilent do the same as above, but do not print
     #     messages before exiting.
     #
@@ -51,10 +63,94 @@ module CLI
     #       1. rescue Abort or Bug
     #       2. Print a contextualized error message
     #       3. Re-raise AbortSilent or BugSilent respectively.
+    #
+    # These aren't the only exceptions that can carry this 'bug' and 'silent'
+    # metadata, however:
+    #
+    # If you raise an exception with `CLI::Kit.raise(..., bug: x, silent: y)`,
+    # those last two (optional) keyword arguments will attach the metadata to
+    # whatever exception you raise. This is interpreted later in the
+    # ErrorHandler to decide how to print output and whether to submit the
+    # exception to bugsnag.
     GenericAbort = Class.new(Exception) # rubocop:disable Lint/InheritException
-    Abort        = Class.new(GenericAbort)
-    Bug          = Class.new(GenericAbort)
-    BugSilent    = Class.new(GenericAbort)
-    AbortSilent  = Class.new(GenericAbort)
+
+    class Abort < GenericAbort # bug:false; silent: false
+      extend(T::Sig)
+
+      sig { returns(T::Boolean) }
+      def bug?
+        false
+      end
+    end
+
+    class Bug < GenericAbort # bug:true; silent:false
+    end
+
+    class BugSilent < GenericAbort # bug:true; silent:true
+      extend(T::Sig)
+
+      sig { returns(T::Boolean) }
+      def silent?
+        true
+      end
+    end
+
+    class AbortSilent < GenericAbort # bug:false; silent:true
+      extend(T::Sig)
+
+      sig { returns(T::Boolean) }
+      def bug?
+        false
+      end
+
+      sig { returns(T::Boolean) }
+      def silent?
+        true
+      end
+    end
+
+    class << self
+      extend T::Sig
+
+      # Mirrors the API of Kernel#raise, but with the addition of a few new
+      # optional keyword arguments. `bug` and `silent` attach metadata to the
+      # exception being raised, which is interpreted later in the ErrorHandler to
+      # decide what to print and whether to submit to bugsnag.
+      #
+      # `depth` is used to trim leading elements of the backtrace. If you wrap
+      # this method in your own wrapper, you'll want to pass `depth: 2`, for
+      # example.
+      sig do
+        params(
+          exception: T.any(Class, String, Exception),
+          string: T.untyped,
+          array: T.nilable(T::Array[String]),
+          cause: T.nilable(Exception),
+          bug: T.nilable(T::Boolean),
+          silent: T.nilable(T::Boolean),
+          depth: Integer,
+        ).returns(T.noreturn)
+      end
+      def raise(
+        # default arguments
+        exception = T.unsafe(nil), string = T.unsafe(nil), array = T.unsafe(nil), cause: $ERROR_INFO,
+        # new arguments
+        bug: nil, silent: nil, depth: 1
+      )
+        if array
+          T.unsafe(Kernel).raise(exception, string, array, cause: cause)
+        elsif string
+          T.unsafe(Kernel).raise(exception, string, Kernel.caller(depth), cause: cause)
+        elsif exception.is_a?(String)
+          T.unsafe(Kernel).raise(RuntimeError, exception, Kernel.caller(depth), cause: cause)
+        else
+          T.unsafe(Kernel).raise(exception, exception.message, Kernel.caller(depth), cause: cause)
+        end
+      rescue Exception => e # rubocop:disable Lint/RescueException
+        e.bug!(bug) unless bug.nil?
+        e.silent!(silent) unless silent.nil?
+        Kernel.raise(e, cause: cause)
+      end
+    end
   end
 end

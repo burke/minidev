@@ -27,7 +27,7 @@ def warn(msg)
 end
 
 def source_path
-  File.expand_path(ENV.fetch('SOURCE_ROOT', File.expand_path('../../..', __FILE__)))
+  File.expand_path(ENV.fetch('SOURCE_ROOT', File.expand_path('../../../Shopify', __dir__)))
 end
 
 deps = %w(cli-ui cli-kit)
@@ -49,7 +49,7 @@ deps.each do |dep|
   dirty = false
 
   Dir.chdir(path) do
-    _, _, stat = Open3.capture3('git fetch origin master')
+    _, _, stat = Open3.capture3('git fetch origin main')
     bail("couldn't git fetch in dependency: {{yellow:#{dep}}}") unless stat.success?
 
     head_sha, stat = Open3.capture2('git rev-parse HEAD')

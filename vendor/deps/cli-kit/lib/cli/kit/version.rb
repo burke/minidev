@@ -1,5 +1,7 @@
+# typed: true
+
 module CLI
   module Kit
-    VERSION = "3.3.0"
+    VERSION = '5.0.0'
   end
 end
