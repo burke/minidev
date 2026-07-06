@@ -4,7 +4,8 @@ module Dev
   module Commands
     FZY = begin
       basename = RUBY_PLATFORM =~ /darwin/ ? 'fzy_darwin' : 'fzy_linux'
-      File.expand_path("vendor/#{basename}", ROOT)
+      CLI::Kit::System.which('fzy', ENV.to_h) ||
+        File.expand_path("vendor/#{basename}", ROOT)
     end
 
     class Cd < Dev::Command
